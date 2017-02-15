@@ -38,9 +38,14 @@ def posthook():
 
                     sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
                     recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
-                    message_text = messaging_event["message"]["text"]  # the message's text
+                    
+                    if 'text' in messaging_event["message"]:
+                        message_text = messaging_event["message"]["text"]  # the message's text
 
-                    send_message(sender_id, "I got: " + message_text)
+                        send_message(sender_id, "I got: " + message_text)
+
+                    else:
+                        send_message(sender_id, "You sent an attachment. Can't read that")
 
                 if messaging_event.get("delivery"):  # delivery confirmation
                     pass
@@ -49,6 +54,9 @@ def posthook():
                     pass
 
                 if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
+                    pass
+
+                else:
                     pass
 
     return "ok", 200
