@@ -3,6 +3,7 @@ import json
 import sys
 import requests
 from flask import Flask, redirect, render_template, request, url_for
+from slackclient import SlackClient
 
 app = Flask(__name__)
 
@@ -10,6 +11,33 @@ APP_SECRET = os.environ['appSecret']
 VALIDATION_TOKEN = os.environ['validationToken']
 PAGE_ACCESS_TOKEN = os.environ['pageAccessToken']
 SERVER_URL = os.environ['serverURL']
+SLACK_TOKEN = os.environ.get('SLACK_TOKEN', None)
+
+slack_client = SlackClient(SLACK_TOKEN)
+
+ASK_OLIN = 'C45MR4YBH'
+
+def list_channels():
+    channels_call = slack_client.api_call("channels.list")
+    if channels_call['ok']:
+        return channels_call['channels']
+    return None
+
+
+def channel_info(channel_id):
+    channel_info = slack_client.api_call("channels.info", channel=channel_id)
+    if channel_info:
+        return channel_info['channel']
+    return None
+
+def send_slack_message(channel_id, message):
+    slack_client.api_call(
+        "chat.postMessage",
+        channel=channel_id,
+        text=message,
+        username='pythonbot',
+        icon_emoji=':robot_face:'
+    )
 
 @app.route('/')
 def home():
@@ -41,6 +69,8 @@ def posthook():
                     
                     if 'text' in messaging_event["message"]:
                         message_text = messaging_event["message"]["text"]  # the message's text
+
+                        send_slack_message(message_text, ASK_OLIN)
 
                         send_message(sender_id, "I got: " + message_text)
 
