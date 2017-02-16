@@ -70,7 +70,7 @@ def posthook():
                     if 'text' in messaging_event["message"]:
                         message_text = messaging_event["message"]["text"]  # the message's text
 
-                        send_slack_message(message_text, ASK_OLIN)
+                        send_slack_message(ASK_OLIN, message_text)
 
                         send_message(sender_id, "I got: " + message_text)
 
