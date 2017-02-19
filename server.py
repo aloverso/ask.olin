@@ -4,6 +4,8 @@ import sys
 import requests
 from flask import Flask, redirect, render_template, request, url_for
 from slackclient import SlackClient
+import random
+import re
 
 app = Flask(__name__)
 
@@ -17,27 +19,11 @@ slack_client = SlackClient(SLACK_TOKEN)
 
 ASK_OLIN = 'C45MR4YBH'
 
-def list_channels():
-    channels_call = slack_client.api_call("channels.list")
-    if channels_call['ok']:
-        return channels_call['channels']
-    return None
-
-
-def channel_info(channel_id):
-    channel_info = slack_client.api_call("channels.info", channel=channel_id)
-    if channel_info:
-        return channel_info['channel']
-    return None
-
-def send_slack_message(channel_id, message):
-    slack_client.api_call(
-        "chat.postMessage",
-        channel=channel_id,
-        text=message,
-        username='pythonbot',
-        icon_emoji=':robot_face:'
-    )
+f = open('nouns.txt')
+nouns = f.readlines()
+nouns = map(lambda n: n.strip(), nouns)
+f.close()
+sender_names = {}
 
 @app.route('/')
 def home():
@@ -66,27 +52,21 @@ def posthook():
                     sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
                     recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
                     
+                    if sender_id not in sender_names:
+                        name = generate_name()
+                        sender_names[sender_id] = name
+
+                    name = sender_names[sender_id]
+
                     if 'text' in messaging_event["message"]:
                         message_text = messaging_event["message"]["text"]  # the message's text
 
-                        send_slack_message(ASK_OLIN, message_text)
+                        send_slack_message(ASK_OLIN, '('+name+')'+message_text)
 
-                        send_message(sender_id, "I got: " + message_text)
+                        send_message(sender_id, "Sent to Oliners! You'll hear back soon!")
 
                     else:
                         send_message(sender_id, "You sent an attachment. Can't read that")
-
-                if messaging_event.get("delivery"):  # delivery confirmation
-                    pass
-
-                if messaging_event.get("optin"):  # optin confirmation
-                    pass
-
-                if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
-                    pass
-
-                else:
-                    pass
 
     return "ok", 200
 
@@ -107,6 +87,49 @@ def send_message(recipient_id, message_text):
     if r.status_code != 200:
         print(r.status_code, r.text)
 
+def list_channels():
+    channels_call = slack_client.api_call("channels.list")
+    if channels_call['ok']:
+        return channels_call['channels']
+    return None
+
+
+def channel_info(channel_id):
+    channel_info = slack_client.api_call("channels.info", channel=channel_id)
+    if channel_info:
+        return channel_info['channel']
+    return None
+
+def send_slack_message(channel_id, message):
+    slack_client.api_call(
+        "chat.postMessage",
+        channel=channel_id,
+        text=message,
+        username='pythonbot',
+        icon_emoji=':robot_face:'
+    )
+
+def generate_name():
+    index = random.random() * len(nouns)
+    name = nouns[index].strip()
+    if name in sender_names:
+        return generate_name()
+    else:
+        return name
+
+def send_reply(slack_message):
+    # assuming in form '>name: messsage here'
+    if slack_message[0:1] == '>':
+        name = re.sub("[^a-zA-Z]+", "", slack_message[1:slack_message.index(' ')])
+        if name in sender_names.values():
+            sender_id = sender_names.keys()[sender_names.values().index(name)]
+            send_message(sender_id, slack_message[slack_message.index(' ')+1:])
+        else:
+            #tell slack wrong name
+            pass
+    else:
+        #tell slack invalid message format
+        pass
 
 if __name__ == '__main__':
     app.run(debug=True, port=int(os.environ.get("PORT", 5000)), host=os.environ.get("HOST", '127.0.0.1'))
