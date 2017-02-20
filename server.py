@@ -25,7 +25,7 @@ animals = f_animals.readlines()
 animals = list(map(lambda n: n.strip(), animals))
 f_animals.close()
 
-f_adj = open('adj.txt')
+f_adj = open('adjectives.txt')
 adj = f_adj.readlines()
 adj = list(map(lambda n: n.strip(), adj))
 f_adj.close()
