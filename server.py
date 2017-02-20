@@ -34,8 +34,9 @@ def inbound():
         text = request.form.get('text')
 
         #Do something with the message here
-        inbound_message = username + " in " + channel + " says: " + text
-        print(inbound_message)
+        # inbound_message = username + " in " + channel + " says: " + text
+        # print(inbound_message)
+        send_reply(text)
 
     return Response(), 200
 
