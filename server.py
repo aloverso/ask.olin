@@ -12,10 +12,11 @@ VALIDATION_TOKEN = os.environ['validationToken']
 PAGE_ACCESS_TOKEN = os.environ['pageAccessToken']
 SERVER_URL = os.environ['serverURL']
 SLACK_TOKEN = os.environ.get('SLACK_TOKEN', None)
+SLACK_WEBHOOK_SECRET = os.environ.get('SLACK_WEBHOOK_SECRET')
 
 slack_client = SlackClient(SLACK_TOKEN)
 
-ASK_OLIN = 'C45MR4YBH'
+ASK_OLIN = 'C4754C6JU'
 
 def list_channels():
     channels_call = slack_client.api_call("channels.list")
@@ -38,6 +39,23 @@ def send_slack_message(channel_id, message):
         username='pythonbot',
         icon_emoji=':robot_face:'
     )
+
+@app.route('/slack', methods=['POST'])
+def inbound():
+    if request.form.get('token') == SLACK_WEBHOOK_SECRET:
+        channel = request.form.get('channel_name')
+        username = request.form.get('user_name')
+        text = request.form.get('text')
+
+        #Do something with the message here
+        inbound_message = username + " in " + channel + " says: " + text
+        print(inbound_message)
+
+    return Response(), 200
+
+@app.route('/', methods=['GET'])
+def test():
+    return Response('It works!')
 
 @app.route('/')
 def home():
@@ -91,8 +109,6 @@ def posthook():
     return "ok", 200
 
 def send_message(recipient_id, message_text):
-
-
     params = { "access_token": PAGE_ACCESS_TOKEN }
     headers = { "Content-Type": "application/json" }
     data = json.dumps({
