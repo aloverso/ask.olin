@@ -140,7 +140,7 @@ def generate_name():
 def send_reply(slack_message):
     # assuming in form '>name: messsage here'
     if slack_message[0:1] == '@':
-        name = re.sub("[^a-zA-Z]+", "", slack_message[1:slack_message.index(' ')])
+        name = re.sub("[^a-zA-Z-]+", "", slack_message[1:slack_message.index(' ')])
         if name in sender_names.values():
             sender_id = list(sender_names.keys())[list(sender_names.values()).index(name)]
             send_message(sender_id, slack_message[slack_message.index(' ')+1:])
