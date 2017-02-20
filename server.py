@@ -127,7 +127,7 @@ def send_slack_message(channel_id, message):
     )
 
 def generate_name():
-    index = random.random() * len(nouns)
+    index = int(random.random() * len(nouns))
     name = nouns[index].strip()
     if name in sender_names:
         return generate_name()
