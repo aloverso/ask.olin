@@ -20,10 +20,10 @@ slack_client = SlackClient(SLACK_TOKEN)
 
 ASK_OLIN = 'C4754C6JU'
 
-f_animals = open('animals.txt')
-animals = f_animals.readlines()
-animals = list(map(lambda n: n.strip(), animals))
-f_animals.close()
+f_emojis = open('emojis.txt')
+emojis = f_emojis.readlines()
+emojis = list(map(lambda n: n.strip(), emojis))
+f_emojis.close()
 
 f_adj = open('adjectives.txt')
 adj = f_adj.readlines()
@@ -125,13 +125,13 @@ def send_slack_message(channel_id, name, message):
         channel=channel_id,
         text=message,
         username=name,
-        icon_emoji=':robot_face:'
+        icon_emoji=":{}:".format(name[name.index('-')+1:])
     )
 
 def generate_name():
-    animal_index = int(random.random() * len(animals))
+    emoji_index = int(random.random() * len(emojis))
     adj_index = int(random.random() * len(adj))
-    name = "{}-{}".format(adj[adj_index], animals[animal_index])
+    name = "{}-{}".format(adj[adj_index], emojis[emoji_index])
     if name in sender_names:
         return generate_name()
     else:
