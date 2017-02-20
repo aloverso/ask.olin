@@ -2,7 +2,7 @@ import os
 import json
 import sys
 import requests
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, redirect, render_template, request, url_for, Response
 from slackclient import SlackClient
 import random
 import re
@@ -14,16 +14,31 @@ VALIDATION_TOKEN = os.environ['validationToken']
 PAGE_ACCESS_TOKEN = os.environ['pageAccessToken']
 SERVER_URL = os.environ['serverURL']
 SLACK_TOKEN = os.environ.get('SLACK_TOKEN', None)
+SLACK_WEBHOOK_SECRET = os.environ.get('SLACK_WEBHOOK_SECRET')
 
 slack_client = SlackClient(SLACK_TOKEN)
 
-ASK_OLIN = 'C45MR4YBH'
+ASK_OLIN = 'C4754C6JU'
 
 f = open('nouns.txt')
 nouns = f.readlines()
-nouns = map(lambda n: n.strip(), nouns)
+nouns = list(map(lambda n: n.strip(), nouns))
 f.close()
 sender_names = {}
+
+@app.route('/slack', methods=['POST'])
+def inbound():
+    if request.form.get('token') == SLACK_WEBHOOK_SECRET:
+        channel = request.form.get('channel_name')
+        username = request.form.get('user_name')
+        text = request.form.get('text')
+
+        #Do something with the message here
+        inbound_message = "{} in {} says: {}".format(username, channel, text)
+        print(inbound_message)
+        send_reply(text)
+
+    return Response(), 200
 
 @app.route('/')
 def home():
@@ -61,7 +76,7 @@ def posthook():
                     if 'text' in messaging_event["message"]:
                         message_text = messaging_event["message"]["text"]  # the message's text
 
-                        send_slack_message(ASK_OLIN, '('+name+')'+message_text)
+                        send_slack_message(ASK_OLIN, '@{} asks: {}'.format(name, message_text))
 
                         send_message(sender_id, "Sent to Oliners! You'll hear back soon!")
 
@@ -71,8 +86,6 @@ def posthook():
     return "ok", 200
 
 def send_message(recipient_id, message_text):
-
-
     params = { "access_token": PAGE_ACCESS_TOKEN }
     headers = { "Content-Type": "application/json" }
     data = json.dumps({
@@ -110,7 +123,7 @@ def send_slack_message(channel_id, message):
     )
 
 def generate_name():
-    index = random.random() * len(nouns)
+    index = int(random.random() * len(nouns))
     name = nouns[index].strip()
     if name in sender_names:
         return generate_name()
@@ -119,10 +132,10 @@ def generate_name():
 
 def send_reply(slack_message):
     # assuming in form '>name: messsage here'
-    if slack_message[0:1] == '>':
+    if slack_message[0:1] == '@':
         name = re.sub("[^a-zA-Z]+", "", slack_message[1:slack_message.index(' ')])
         if name in sender_names.values():
-            sender_id = sender_names.keys()[sender_names.values().index(name)]
+            sender_id = list(sender_names.keys())[list(sender_names.values()).index(name)]
             send_message(sender_id, slack_message[slack_message.index(' ')+1:])
         else:
             #tell slack wrong name

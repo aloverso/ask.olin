@@ -6,7 +6,7 @@ SLACK_TOKEN = os.environ.get('SLACK_TOKEN', None)
 
 slack_client = SlackClient(SLACK_TOKEN)
 
-ASK_OLIN = 'C45MR4YBH'
+ASK_OLIN = 'C4754C6JU'
 
 
 def list_channels():
@@ -36,14 +36,14 @@ if __name__ == '__main__':
 
     send_message(ASK_OLIN, 'This is a work in progress')
 
-    # channels = list_channels()
-    # if channels:
-    #     print("Channels: ")
-    #     for c in channels:
-    #         print(c['name'] + " (" + c['id'] + ")")
-    #         detailed_info = channel_info(c['id'])
-    #         if detailed_info:
-    #             if detailed_info.get('latest', False):
-    #                 print(detailed_info['latest']['text'])
-    # else:
-    #     print("Unable to authenticate.")
+    channels = list_channels()
+    if channels:
+        print("Channels: ")
+        for c in channels:
+            print(c['name'] + " (" + c['id'] + ")")
+            detailed_info = channel_info(c['id'])
+            if detailed_info:
+                if detailed_info.get('latest', False):
+                    print(detailed_info['latest']['text'])
+    else:
+        print("Unable to authenticate.")
