@@ -22,7 +22,7 @@ ASK_OLIN = 'C4754C6JU'
 
 f = open('nouns.txt')
 nouns = f.readlines()
-nouns = map(lambda n: n.strip(), nouns)
+nouns = list(map(lambda n: n.strip(), nouns))
 f.close()
 sender_names = {}
 
