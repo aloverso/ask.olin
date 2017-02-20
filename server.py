@@ -82,7 +82,7 @@ def posthook():
                     if 'text' in messaging_event["message"]:
                         message_text = messaging_event["message"]["text"]  # the message's text
 
-                        send_slack_message(ASK_OLIN, '{} asks: {}'.format(name, message_text))
+                        send_slack_message(ASK_OLIN, name, '{} asks: {}'.format(name, message_text))
 
                         send_message(sender_id, "Sent to Oliners! You'll hear back soon!")
 
@@ -119,12 +119,12 @@ def channel_info(channel_id):
         return channel_info['channel']
     return None
 
-def send_slack_message(channel_id, message):
+def send_slack_message(channel_id, name, message):
     slack_client.api_call(
         "chat.postMessage",
         channel=channel_id,
         text=message,
-        username='pythonbot',
+        username=name,
         icon_emoji=':robot_face:'
     )
 
