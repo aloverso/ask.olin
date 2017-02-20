@@ -34,15 +34,11 @@ def inbound():
         text = request.form.get('text')
 
         #Do something with the message here
-        inbound_message = username + " in " + channel + " says: " + text
+        inbound_message = "{} in {} says: {}".format(username, channel, text)
         print(inbound_message)
         send_reply(text)
 
     return Response(), 200
-
-@app.route('/', methods=['GET'])
-def test():
-    return Response('It works!')
 
 @app.route('/')
 def home():
@@ -80,7 +76,7 @@ def posthook():
                     if 'text' in messaging_event["message"]:
                         message_text = messaging_event["message"]["text"]  # the message's text
 
-                        send_slack_message(ASK_OLIN, '('+name+')'+message_text)
+                        send_slack_message(ASK_OLIN, '@{} asks: {}'.format(name, message_text))
 
                         send_message(sender_id, "Sent to Oliners! You'll hear back soon!")
 
