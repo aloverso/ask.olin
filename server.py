@@ -21,12 +21,12 @@ slack_client = SlackClient(SLACK_TOKEN)
 ASK_OLIN = 'C4754C6JU'
 
 f_animals = open('animals.txt')
-animals = f.readlines()
+animals = f_animals.readlines()
 animals = list(map(lambda n: n.strip(), animals))
 f_animals.close()
 
 f_adj = open('adj.txt')
-adj = f.readlines()
+adj = f_adj.readlines()
 adj = list(map(lambda n: n.strip(), adj))
 f_adj.close()
 
