@@ -20,17 +20,17 @@ slack_client = SlackClient(SLACK_TOKEN)
 
 ASK_OLIN = 'C4754C6JU'
 
-f_emojis = open('emojis.txt')
-emojis = f_emojis.readlines()
-emojis = list(map(lambda n: n.strip(), emojis))
-f_emojis.close()
+# f_emojis = open('emojis.txt')
+# emojis = f_emojis.readlines()
+# emojis = list(map(lambda n: n.strip(), emojis))
+# f_emojis.close()
 
-f_adj = open('adjectives.txt')
-adj = f_adj.readlines()
-adj = list(map(lambda n: n.strip(), adj))
-f_adj.close()
+# f_adj = open('adjectives.txt')
+# adj = f_adj.readlines()
+# adj = list(map(lambda n: n.strip(), adj))
+# f_adj.close()
 
-sender_names = {}
+sender_names = json.load(open('sender_names.json'))
 
 @app.route('/slack', methods=['POST'])
 def inbound():
@@ -73,11 +73,13 @@ def posthook():
                     sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
                     recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
                     
-                    if sender_id not in sender_names:
-                        name = generate_name()
-                        sender_names[sender_id] = name
+                    # if sender_id not in sender_names:
+                    #     name = generate_name()
+                    #     sender_names[sender_id] = name
 
-                    name = sender_names[sender_id]
+                    # name = sender_names[sender_id]
+
+                    name = generate_or_find_name(sender_id)
 
                     if 'text' in messaging_event["message"]:
                         message_text = messaging_event["message"]["text"]  # the message's text
@@ -91,6 +93,7 @@ def posthook():
                         send_slack_message(ASK_OLIN, name, '', attachment_url)
 
                         send_message(sender_id, "Sent to Oliners! You'll hear back soon!")
+
                     else:
                         send_message(sender_id, "Sorry, I can't read that message format!")
 
@@ -134,14 +137,26 @@ def send_slack_message(channel_id, name, message, attachment_url):
         icon_emoji=":{}:".format(name[name.index('-')+1:])
     )
 
-def generate_name():
-    emoji_index = int(random.random() * len(emojis))
-    adj_index = int(random.random() * len(adj))
-    name = "{}-{}".format(adj[adj_index], emojis[emoji_index])
-    if name in sender_names:
-        return generate_name()
-    else:
-        return name
+# def generate_name():
+#     emoji_index = int(random.random() * len(emojis))
+#     adj_index = int(random.random() * len(adj))
+#     name = "{}-{}".format(adj[adj_index], emojis[emoji_index])
+#     if name in sender_names:
+#         return generate_name()
+#     else:
+#         return name
+
+def generate_or_find_name(sender_id):
+    if sender_id not in sender_names:
+        f = open('names.txt')
+        names = f.readlines()
+        names = list(map(lambda n: n.strip(), names))
+        f.close()
+
+        new_name = names[len(sender_names)+1]
+        sender_names[sender_id] = new_name
+        json.dump(sender_names, open('sender_names.json', 'w'))
+    return sender_names[sender_id]
 
 def send_reply(slack_message):
     # assuming in form '>name: messsage here'
