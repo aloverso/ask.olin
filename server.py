@@ -20,16 +20,6 @@ slack_client = SlackClient(SLACK_TOKEN)
 
 ASK_OLIN = 'C4754C6JU'
 
-# f_emojis = open('emojis.txt')
-# emojis = f_emojis.readlines()
-# emojis = list(map(lambda n: n.strip(), emojis))
-# f_emojis.close()
-
-# f_adj = open('adjectives.txt')
-# adj = f_adj.readlines()
-# adj = list(map(lambda n: n.strip(), adj))
-# f_adj.close()
-
 sender_names = json.load(open('sender_names.json'))
 
 @app.route('/slack', methods=['POST'])
@@ -73,12 +63,6 @@ def posthook():
                     sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
                     recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
                     
-                    # if sender_id not in sender_names:
-                    #     name = generate_name()
-                    #     sender_names[sender_id] = name
-
-                    # name = sender_names[sender_id]
-
                     name = generate_or_find_name(sender_id)
 
                     if 'text' in messaging_event["message"]:
@@ -136,15 +120,6 @@ def send_slack_message(channel_id, name, message, attachment_url):
         attachments=[{"image_url":attachment_url, "title":""}],
         icon_emoji=":{}:".format(name[name.index('-')+1:])
     )
-
-# def generate_name():
-#     emoji_index = int(random.random() * len(emojis))
-#     adj_index = int(random.random() * len(adj))
-#     name = "{}-{}".format(adj[adj_index], emojis[emoji_index])
-#     if name in sender_names:
-#         return generate_name()
-#     else:
-#         return name
 
 def generate_or_find_name(sender_id):
     if sender_id not in sender_names:
