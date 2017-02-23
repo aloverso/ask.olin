@@ -6,6 +6,8 @@ from flask import Flask, redirect, render_template, request, url_for, Response
 from slackclient import SlackClient
 import random
 import re
+import time
+from pymongo import MongoClient
 
 app = Flask(__name__)
 
@@ -15,12 +17,25 @@ PAGE_ACCESS_TOKEN = os.environ['pageAccessToken']
 SERVER_URL = os.environ['serverURL']
 SLACK_TOKEN = os.environ.get('SLACK_TOKEN', None)
 SLACK_WEBHOOK_SECRET = os.environ.get('SLACK_WEBHOOK_SECRET')
+MONGO_URI = os.environ['mongo_uri']
 
 slack_client = SlackClient(SLACK_TOKEN)
 
 ASK_OLIN = 'C4754C6JU'
 
-sender_names = json.load(open('sender_names.json'))
+client = MongoClient(MONGO_URI)
+db = client.askolin
+users = db.users
+
+# users = json.load(open('users.json'))
+
+class User:
+    def __init__(sender_id, name):
+        self.sender_id = sender_id
+        self.name = name
+        self.birthday = int(time.time())
+        self.last_message_sent = int(time.time())
+        self.last_message_recieved = None
 
 @app.route('/slack', methods=['POST'])
 def inbound():
@@ -121,25 +136,31 @@ def send_slack_message(channel_id, name, message, attachment_url):
         icon_emoji=":{}:".format(name[name.index('-')+1:])
     )
 
-def generate_or_find_name(sender_id):
-    if sender_id not in sender_names:
+def generate_or_find_user(sender_id):
+    if users.find_one({"sender_id":sender_id}) == None:
+
         f = open('names.txt')
         names = f.readlines()
         names = list(map(lambda n: n.strip(), names))
         f.close()
 
-        new_name = names[len(sender_names)+1]
-        sender_names[sender_id] = new_name
-        json.dump(sender_names, open('sender_names.json', 'w'))
-    return sender_names[sender_id]
+        new_name = names[users.count()]
+
+        new_user = User(sender_id, new_name)
+
+        users.insert_one(new_user.__dict__)
+
+    return users.find_one({"sender_id":sender_id})['name']
 
 def send_reply(slack_message):
     # assuming in form '>name: messsage here'
     if slack_message[0:1] == '@':
         name = re.sub("[^a-zA-Z-]+", "", slack_message[1:slack_message.index(' ')])
-        if name in sender_names.values():
-            sender_id = list(sender_names.keys())[list(sender_names.values()).index(name)]
-            send_message(sender_id, slack_message[slack_message.index(' ')+1:])
+
+        user = users.find_one({"name":name})
+        sender_id = user['sender_id']
+        send_message(sender_id, slack_message[slack_message.index(' ')+1:])
+
         else:
             #tell slack wrong name
             pass
