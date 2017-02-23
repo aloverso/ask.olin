@@ -30,7 +30,7 @@ users = db.users
 # users = json.load(open('users.json'))
 
 class User:
-    def __init__(sender_id, name):
+    def __init__(self, sender_id, name):
         self.sender_id = sender_id
         self.name = name
         self.birthday = int(time.time())
