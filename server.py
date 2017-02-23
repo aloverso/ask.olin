@@ -86,7 +86,7 @@ def posthook():
 
                         send_message(sender_id, "Sent to Oliners! You'll hear back soon!")
 
-                    elif 'attachments' in messaging_event["messsage"]:
+                    elif 'attachments' in messaging_event["message"]:
                         attachment_url = messaging_event["message"]["attachments"][0]["payload"]["url"]
                         send_slack_message(ASK_OLIN, name, '', attachment_url)
 
