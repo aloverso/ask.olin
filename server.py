@@ -158,9 +158,10 @@ def send_reply(slack_message):
         name = re.sub("[^a-zA-Z-]+", "", slack_message[1:slack_message.index(' ')])
 
         user = users.find_one({"name":name})
-        sender_id = user['sender_id']
-        send_message(sender_id, slack_message[slack_message.index(' ')+1:])
 
+        if user != None:
+            sender_id = user['sender_id']
+            send_message(sender_id, slack_message[slack_message.index(' ')+1:])
         else:
             #tell slack wrong name
             pass
