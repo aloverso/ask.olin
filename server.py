@@ -82,13 +82,17 @@ def posthook():
                     if 'text' in messaging_event["message"]:
                         message_text = messaging_event["message"]["text"]  # the message's text
 
-                        send_slack_message(ASK_OLIN, name, message_text)
+                        send_slack_message(ASK_OLIN, name, message_text, '')
 
                         send_message(sender_id, "Sent to Oliners! You'll hear back soon!")
 
+                    elif 'attachments' in messaging_event["messsage"]:
+                        attachment_url = messaging_event["message"]["attachments"][0]["payload"]["url"]
+                        send_slack_message(ASK_OLIN, name, '', attachment_url)
+
+                        send_message(sender_id, "Sent to Oliners! You'll hear back soon!")
                     else:
-                        print(messaging_event["message"]["attachments"])
-                        send_message(sender_id, "You sent an attachment. Can't read that")
+                        send_message(sender_id, "Sorry, I can't read that message format!")
 
     return "ok", 200
 
@@ -120,13 +124,13 @@ def channel_info(channel_id):
         return channel_info['channel']
     return None
 
-def send_slack_message(channel_id, name, message):
+def send_slack_message(channel_id, name, message, attachment_url):
     slack_client.api_call(
         "chat.postMessage",
         channel=channel_id,
         text=message,
         username=name,
-        attachments=[{"image_url":"http://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg", "title":"test"}],
+        attachments=[{"image_url":attachment_url, "title":""}],
         icon_emoji=":{}:".format(name[name.index('-')+1:])
     )
 
