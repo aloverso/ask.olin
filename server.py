@@ -126,6 +126,7 @@ def send_slack_message(channel_id, name, message):
         channel=channel_id,
         text=message,
         username=name,
+        attachments=[{"image_url":"http://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg", "title":"test"}],
         icon_emoji=":{}:".format(name[name.index('-')+1:])
     )
 
