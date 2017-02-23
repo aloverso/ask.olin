@@ -87,6 +87,7 @@ def posthook():
                         send_message(sender_id, "Sent to Oliners! You'll hear back soon!")
 
                     else:
+                        print(messaging_event["message"]["attachments"])
                         send_message(sender_id, "You sent an attachment. Can't read that")
 
     return "ok", 200
