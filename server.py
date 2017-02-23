@@ -163,10 +163,10 @@ def send_reply(slack_message):
             sender_id = user['sender_id']
             send_message(sender_id, slack_message[slack_message.index(' ')+1:])
         else:
-            #tell slack wrong name
+            print("can't find the name")
             pass
     else:
-        #tell slack invalid message format
+        print("doesn't start with @")
         pass
 
 if __name__ == '__main__':
