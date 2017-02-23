@@ -10,4 +10,4 @@ Lists of adjectives were borrowed from [docker name generator](https://github.co
 
 Figuring out how to use the syntax for Facebook Messenger with Python and Flask were helped by [this Git repo tutorial](https://github.com/hartleybrody/fb-messenger-bot)
 
-Learning how to use Slack integrated with Flask from [this tutorial](https://realpython.com/blog/python/getting-started-with-the-slack-api-using-python-and-flask/)
+Learning how to use Slack integrated with Flask from [this tutorial](https://realpython.com/blog/python/getting-started-with-the-slack-api-using-python-and-flask)
