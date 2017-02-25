@@ -29,6 +29,19 @@ users = db.users
 
 # users = json.load(open('users.json'))
 
+# From: https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python
+def levenshtein(seq1, seq2):
+    oneago = None
+    thisrow = range(1, len(seq2) + 1) + [0]
+    for x in xrange(len(seq1)):
+        twoago, oneago, thisrow = oneago, thisrow, [0] * len(seq2) + [x + 1]
+        for y in xrange(len(seq2)):
+            delcost = oneago[y] + 1
+            addcost = thisrow[y - 1] + 1
+            subcost = oneago[y - 1] + (seq1[x] != seq2[y])
+            thisrow[y] = min(delcost, addcost, subcost)
+    return thisrow[len(seq2) - 1]
+
 class User:
     def __init__(self, sender_id, name):
         self.sender_id = sender_id
@@ -136,6 +149,20 @@ def send_slack_message(channel_id, name, message, attachment_url):
         icon_emoji=":{}:".format(name[name.index('-')+1:])
     )
 
+def send_slack_autocorrect(channel_id, autocorrected):
+    pass
+
+def autocorrect_name(given_name):
+    possible_names = [('', 4)]
+
+    for name in [user['name'] for user in users.find()]:
+        lev_dist = Levenshtein_distance(name, given_name)
+
+        if lev_dist <= 3:
+            possible_names.append((name, lev_dist))
+
+    return min(possible_names, key=(lambda x: x[1]))
+
 def generate_or_find_user(sender_id):
     if users.find_one({"sender_id":sender_id}) == None:
 
@@ -153,7 +180,7 @@ def generate_or_find_user(sender_id):
     return users.find_one({"sender_id":sender_id})['name']
 
 def send_reply(slack_message):
-    # assuming in form '>name: messsage here'
+    # assuming in form '@name: messsage here'
     if slack_message[0:1] == '@':
         name = re.sub("[^a-zA-Z-]+", "", slack_message[1:slack_message.index(' ')])
 
@@ -163,8 +190,13 @@ def send_reply(slack_message):
             sender_id = user['sender_id']
             send_message(sender_id, slack_message[slack_message.index(' ')+1:])
         else:
-            print("can't find the name")
-            pass
+            print("Can't find the name")
+            best_guess = autocorrect_name(name)
+            if best_guess != '':
+                sender_id = users.find_one({"name":name})['sender_id']
+                print('Did you mean: {}'.format(best_guess))
+                # send_slack_autocorrect(sender_id, slack_message[slack_message.index(' ')+1:])
+
     else:
         print("doesn't start with @")
         pass
