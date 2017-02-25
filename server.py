@@ -27,8 +27,6 @@ client = MongoClient(MONGO_URI)
 db = client.askolin
 users = db.users
 
-# users = json.load(open('users.json'))
-
 # From: https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python
 def levenshtein(seq1, seq2):
     oneago = None
@@ -156,7 +154,7 @@ def autocorrect_name(given_name):
     possible_names = [('', 4)]
 
     for name in [user['name'] for user in users.find()]:
-        lev_dist = Levenshtein_distance(name, given_name)
+        lev_dist = levenshtein(name, given_name)
 
         if lev_dist <= 3:
             possible_names.append((name, lev_dist))
