@@ -183,6 +183,7 @@ def send_reply(slack_message):
         name = re.sub("[^a-zA-Z-]+", "", slack_message[1:slack_message.index(' ')])
 
         user = users.find_one({"name":name})
+        print("Name: {}, User: {}".format(str(name), str(user)))
 
         if user != None:
             sender_id = user['sender_id']
