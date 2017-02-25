@@ -191,7 +191,9 @@ def send_reply(slack_message):
             print("Can't find the name")
             best_guess = autocorrect_name(name)
             if best_guess != '':
-                sender_id = users.find_one({"name":best_guess})['sender_id']
+                user = users.find_one({"name":best_guess})
+                print("best_guess: {}, user: {}".format(str(best_guess), str(user)))
+                sender_id = user['sender_id']
                 print('Did you mean: {}'.format(best_guess))
                 # send_slack_autocorrect(sender_id, slack_message[slack_message.index(' ')+1:])
 
