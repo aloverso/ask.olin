@@ -159,7 +159,7 @@ def autocorrect_name(given_name):
         if lev_dist <= 3:
             possible_names.append((name, lev_dist))
 
-    return min(possible_names, key=(lambda x: x[1]))
+    return min(possible_names, key=(lambda x: x[1]))[0]
 
 def generate_or_find_user(sender_id):
     if users.find_one({"sender_id":sender_id}) == None:
@@ -183,7 +183,7 @@ def send_reply(slack_message):
         name = re.sub("[^a-zA-Z-]+", "", slack_message[1:slack_message.index(' ')])
 
         user = users.find_one({"name":name})
-        print("Name: {}, User: {}".format(str(name), str(user)))
+        # print("Name: {}, User: {}".format(str(name), str(user)))
 
         if user != None:
             sender_id = user['sender_id']
@@ -193,9 +193,10 @@ def send_reply(slack_message):
             best_guess = autocorrect_name(name)
             if best_guess != '':
                 user = users.find_one({"name":best_guess})
-                print("best_guess: {}, user: {}".format(str(best_guess), str(user)))
+                # print("best_guess: {}, user: {}".format(str(best_guess), str(user)))
                 sender_id = user['sender_id']
                 print('Did you mean: {}'.format(best_guess))
+                send_message(sender_id, slack_message[slack_message.index(' ')+1:])
                 # send_slack_autocorrect(sender_id, slack_message[slack_message.index(' ')+1:])
 
     else:
