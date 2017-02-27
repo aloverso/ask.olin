@@ -27,18 +27,6 @@ client = MongoClient(MONGO_URI)
 db = client.askolin
 users = db.users
 
-# From: https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python
-def levenshtein(seq1, seq2):
-    oneago = None
-    thisrow = list(range(1, len(seq2) + 1)) + [0]
-    for x in range(len(seq1)):
-        twoago, oneago, thisrow = oneago, thisrow, [0] * len(seq2) + [x + 1]
-        for y in range(len(seq2)):
-            delcost = oneago[y] + 1
-            addcost = thisrow[y - 1] + 1
-            subcost = oneago[y - 1] + (seq1[x] != seq2[y])
-            thisrow[y] = min(delcost, addcost, subcost)
-    return thisrow[len(seq2) - 1]
 
 class User:
     def __init__(self, sender_id, name):
@@ -54,19 +42,15 @@ def inbound():
         channel = request.form.get('channel_name')
         username = request.form.get('user_name')
         text = request.form.get('text')
-        thread_ts = request.form.get('thread_ts', None)
+        timestamp = request.form.get('timestamp', None)
 
-        print(type(request.form))
-        print(request.form)
+        # print(type(request.form))
+        # print(request.form)
 
         #Do something with the message here
         inbound_message = "{} in {} says: {}".format(username, channel, text)
         print(inbound_message)
-
-        if thread_ts == None:
-            send_reply(text)
-        else:
-            send_thread_reply(thread_ts, text)
+        send_reply(text, timestamp)
 
     return Response(), 200
 
@@ -116,6 +100,19 @@ def posthook():
                         send_message(sender_id, "Sorry, I can't read that message format!")
 
     return "ok", 200
+
+# From: https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python
+def levenshtein(seq1, seq2):
+    oneago = None
+    thisrow = list(range(1, len(seq2) + 1)) + [0]
+    for x in range(len(seq1)):
+        twoago, oneago, thisrow = oneago, thisrow, [0] * len(seq2) + [x + 1]
+        for y in range(len(seq2)):
+            delcost = oneago[y] + 1
+            addcost = thisrow[y - 1] + 1
+            subcost = oneago[y - 1] + (seq1[x] != seq2[y])
+            thisrow[y] = min(delcost, addcost, subcost)
+    return thisrow[len(seq2) - 1]
 
 def send_message(recipient_id, message_text):
     params = { "access_token": PAGE_ACCESS_TOKEN }
@@ -185,7 +182,7 @@ def generate_or_find_user(sender_id):
 
     return users.find_one({"sender_id":sender_id})['name']
 
-def send_reply(slack_message):
+def send_reply(slack_message, timestamp):
     # assuming in form '@name: messsage here'
     if slack_message[0:1] == '@':
         name = re.sub("[^a-zA-Z-]+", "", slack_message[1:slack_message.index(' ')])
@@ -208,25 +205,37 @@ def send_reply(slack_message):
                 # send_slack_autocorrect(sender_id, slack_message[slack_message.index(' ')+1:])
 
     else:
-        print("Doesn't start with @")
-        pass
+        print("Doesn't start with @, checking to see if it's in a thread")
 
-def send_thread_reply(message, thread_ts):
-    # Find target
-    messages = slack_client.api_call(
-        "channels.history",
-        channel=channel_id,
-        latest=thread_ts,
-        inclusive=True
-    )
+        thread_message = slack_client.api_call(
+            "channels.history",
+            channel=channel_id,
+            latest=timestamp
+            inclusive=True
+        )
 
-    user = users.find_one({"name":messages[-1]['user']})
+        thread_ts = thread_message.get('thread_ts', None)
 
-    if user != None:
-        sender_id = user['sender_id']
-        send_message(sender_id, message)
-    else:
-        print("Thread '{}' not found".format(thread_ts))
+        print('Thread debug: Thread message = "{}"'.format(thread_message['text']))
+
+        if thread_ts != timestamp: #Make sure it isn't the parent
+            parent_message = slack_client.api_call(
+                "channels.history",
+                channel=channel_id,
+                latest=thread_ts
+                inclusive=True
+            )
+
+            print('Thread debug: Parent message = "{}"'.format(parent_message['text']))
+
+            user = users.find_one({"name" : parent_message['user']})
+
+            if user != None:
+                sender_id = user['sender_id']
+                send_message(sender_id, slack_message)
+            else:
+                print("Thread '{}' not found".format(thread_ts))
+    
 
 if __name__ == '__main__':
     app.run(debug=True, port=int(os.environ.get("PORT", 5000)), host=os.environ.get("HOST", '127.0.0.1'))
