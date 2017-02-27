@@ -44,13 +44,8 @@ def inbound():
         text = request.form.get('text')
         timestamp = request.form.get('timestamp', None)
 
-        print(type(request.form))
-        print(request.form)
-
         #Do something with the message here
         inbound_message = "{} in {} says: {}".format(username, channel, text)
-        print(inbound_message)
-        send_reply(text, timestamp)
 
     return Response(), 200
 
@@ -188,7 +183,6 @@ def send_reply(slack_message, timestamp):
         name = re.sub("[^a-zA-Z-]+", "", slack_message[1:slack_message.index(' ')])
 
         user = users.find_one({"name":name})
-        # print("Name: {}, User: {}".format(str(name), str(user)))
 
         if user != None:
             sender_id = user['sender_id']
@@ -198,7 +192,6 @@ def send_reply(slack_message, timestamp):
             best_guess = autocorrect_name(name)
             if best_guess != '':
                 user = users.find_one({"name":best_guess})
-                # print("best_guess: {}, user: {}".format(str(best_guess), str(user)))
                 sender_id = user['sender_id']
                 print('Did you mean: {}'.format(best_guess))
                 send_message(sender_id, slack_message[slack_message.index(' ')+1:])
@@ -215,9 +208,6 @@ def send_reply(slack_message, timestamp):
             count=1
         )
 
-        print("Thread Messages")
-        print(thread_messages)
-
         thread_message = thread_messages['messages'][0]
 
         # Check if poster is involved in a thread
@@ -230,9 +220,6 @@ def send_reply(slack_message, timestamp):
                     inclusive=True,
                     count=1
                 )
-                print("Parent Messages")
-                print(parent_messages)
-                # print('Thread debug: Parent message = "{}"'.format(parent_message['text']))
 
                 message = parent_messages['messages'][0]
 
