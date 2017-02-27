@@ -209,7 +209,7 @@ def send_reply(slack_message, timestamp):
 
         thread_message = slack_client.api_call(
             "channels.history",
-            channel=channel_id,
+            channel=ASK_OLIN,
             latest=timestamp,
             inclusive=True
         )
@@ -221,7 +221,7 @@ def send_reply(slack_message, timestamp):
         if thread_ts != timestamp: #Make sure it isn't the parent
             parent_message = slack_client.api_call(
                 "channels.history",
-                channel=channel_id,
+                channel=ASK_OLIN,
                 latest=thread_ts,
                 inclusive=True
             )
