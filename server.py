@@ -44,8 +44,8 @@ def inbound():
         text = request.form.get('text')
         timestamp = request.form.get('timestamp', None)
 
-        # print(type(request.form))
-        # print(request.form)
+        print(type(request.form))
+        print(request.form)
 
         #Do something with the message here
         inbound_message = "{} in {} says: {}".format(username, channel, text)
@@ -207,26 +207,34 @@ def send_reply(slack_message, timestamp):
     else:
         print("Doesn't start with @, checking to see if it's in a thread")
 
-        thread_message = slack_client.api_call(
+        thread_messages = slack_client.api_call(
             "channels.history",
             channel=ASK_OLIN,
             latest=timestamp,
             inclusive=True
         )
 
+        print("Thread Messages")
+        print(thread_messages)
+
+        thread_message = thread_messages['messages'][0]
+
         thread_ts = thread_message.get('thread_ts', None)
 
-        print('Thread debug: Thread message = "{}"'.format(thread_message['text']))
+        # print('Thread debug: Thread message = "{}"'.format(thread_message['text']))
 
         if thread_ts != timestamp: #Make sure it isn't the parent
-            parent_message = slack_client.api_call(
+            parent_messages = slack_client.api_call(
                 "channels.history",
                 channel=ASK_OLIN,
                 latest=thread_ts,
                 inclusive=True
             )
+            print("Parent Messages")
+            print(parent_messages)
+            # print('Thread debug: Parent message = "{}"'.format(parent_message['text']))
 
-            print('Thread debug: Parent message = "{}"'.format(parent_message['text']))
+            parent_message = parent_messages['messages'][0]
 
             user = users.find_one({"name" : parent_message['user']})
 
