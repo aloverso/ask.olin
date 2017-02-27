@@ -54,11 +54,16 @@ def inbound():
         channel = request.form.get('channel_name')
         username = request.form.get('user_name')
         text = request.form.get('text')
+        thread_ts = request.form.get('thread_ts', None)
 
         #Do something with the message here
         inbound_message = "{} in {} says: {}".format(username, channel, text)
         print(inbound_message)
-        send_reply(text)
+
+        if thread == None:
+            send_reply(text)
+        else:
+            send_thread_reply(thread_ts, text)
 
     return Response(), 200
 
@@ -200,8 +205,25 @@ def send_reply(slack_message):
                 # send_slack_autocorrect(sender_id, slack_message[slack_message.index(' ')+1:])
 
     else:
-        print("doesn't start with @")
+        print("Doesn't start with @")
         pass
+
+def send_thread_reply(message, thread_ts):
+    # Find target
+    messages = slack_client.api_call(
+        "channels.history",
+        channel=channel_id,
+        latest=thread_ts,
+        inclusive=True
+    )
+
+    user = users.find_one({"name":messages[-1]['user']})
+
+    if user != None:
+        sender_id = user['sender_id']
+        send_message(sender_id, message)
+    else:
+        print("Thread '{}' not found".format(thread_ts))
 
 if __name__ == '__main__':
     app.run(debug=True, port=int(os.environ.get("PORT", 5000)), host=os.environ.get("HOST", '127.0.0.1'))
