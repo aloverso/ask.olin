@@ -36,6 +36,7 @@ class User:
         self.last_message_sent = int(time.time())
         self.last_message_recieved = None
 
+# Process incoming Slack messages
 @app.route('/slack', methods=['POST'])
 def inbound():
     if request.form.get('token') == SLACK_WEBHOOK_SECRET:
@@ -46,6 +47,8 @@ def inbound():
 
         #Do something with the message here
         inbound_message = "{} in {} says: {}".format(username, channel, text)
+        print(inbound_message)
+        send_reply(text, timestamp)
 
     return Response(), 200
 
@@ -53,6 +56,7 @@ def inbound():
 def home():
     return 'ok'
 
+# Verify FB Messenger Token
 @app.route('/webhook', methods=['GET'])
 def verify():
     if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.challenge"):
@@ -62,6 +66,7 @@ def verify():
 
     return "Hello world", 200
 
+# Process incomming Messenger webhook
 @app.route('/webhook', methods=['POST'])
 def posthook():
 
@@ -98,6 +103,10 @@ def posthook():
 
 # From: https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python
 def levenshtein(seq1, seq2):
+    """
+    Takes two strings, returns how many transformations it takes to go from seq1 to seq2
+    TODO: Optimize to stop calculating after finding a lev distance > 3
+    """
     oneago = None
     thisrow = list(range(1, len(seq2) + 1)) + [0]
     for x in range(len(seq1)):
@@ -110,6 +119,9 @@ def levenshtein(seq1, seq2):
     return thisrow[len(seq2) - 1]
 
 def send_message(recipient_id, message_text):
+    """
+    Send message to FB Messenger
+    """
     params = { "access_token": PAGE_ACCESS_TOKEN }
     headers = { "Content-Type": "application/json" }
     data = json.dumps({
@@ -125,6 +137,9 @@ def send_message(recipient_id, message_text):
         print(r.status_code, r.text)
 
 def list_channels():
+    """
+    List Slack Channels
+    """
     channels_call = slack_client.api_call("channels.list")
     if channels_call['ok']:
         return channels_call['channels']
@@ -132,12 +147,18 @@ def list_channels():
 
 
 def channel_info(channel_id):
+    """
+    Get Slack channel info
+    """
     channel_info = slack_client.api_call("channels.info", channel=channel_id)
     if channel_info:
         return channel_info['channel']
     return None
 
 def send_slack_message(channel_id, name, message, attachment_url):
+    """
+    Send message to Slack
+    """
     slack_client.api_call(
         "chat.postMessage",
         channel=channel_id,
@@ -148,9 +169,15 @@ def send_slack_message(channel_id, name, message, attachment_url):
     )
 
 def send_slack_autocorrect(channel_id, autocorrected):
+    """
+    Send message to slack informing that the username someone typed was autocorrected.
+    """
     pass
 
 def autocorrect_name(given_name):
+    """
+    Takes name given by user, returns closest match found in the database.
+    """
     possible_names = [('', 4)]
 
     for name in [user['name'] for user in users.find()]:
@@ -162,6 +189,9 @@ def autocorrect_name(given_name):
     return min(possible_names, key=(lambda x: x[1]))[0]
 
 def generate_or_find_user(sender_id):
+    """
+    Takes Slack sender_id, returns username either from the database or result from username generation.
+    """
     if users.find_one({"sender_id":sender_id}) == None:
 
         f = open('names.txt')
@@ -178,6 +208,9 @@ def generate_or_find_user(sender_id):
     return users.find_one({"sender_id":sender_id})['name']
 
 def send_reply(slack_message, timestamp):
+    """
+    Process slack message to send the reply to Messenger
+    """
     # assuming in form '@name: messsage here'
     if slack_message[0:1] == '@':
         name = re.sub("[^a-zA-Z-]+", "", slack_message[1:slack_message.index(' ')])
@@ -220,7 +253,6 @@ def send_reply(slack_message, timestamp):
                     inclusive=True,
                     count=1
                 )
-
                 message = parent_messages['messages'][0]
 
             else:                                               # Has replies -> Must be the parent
@@ -229,7 +261,6 @@ def send_reply(slack_message, timestamp):
             # Check that the parent is a bot
             if message.get('subtype', None) == 'bot_message':
                 user = users.find_one({"name" : message['username']})
-                print("username = {}, user = {}".format(message['username'], user))
 
                 if user != None:
                     sender_id = user['sender_id']
