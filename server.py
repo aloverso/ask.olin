@@ -221,7 +221,7 @@ def send_reply(slack_message, timestamp):
         thread_message = thread_messages['messages'][0]
 
         # Check if poster is a bot and involved in a thread
-        if thread_message.get('subtype', None) == 'bot_message' and thread_message.get('thread_ts', None) != None:
+        if thread_message.get('thread_ts', None) != None:
             if thread_message.get('replies', None) == None:     # No replies -> Not parent
                 parent_messages = slack_client.api_call(
                     "channels.history",
@@ -235,11 +235,13 @@ def send_reply(slack_message, timestamp):
                 # print('Thread debug: Parent message = "{}"'.format(parent_message['text']))
 
                 parent_message = parent_messages['messages'][0]
-
-                user = users.find_one({"name" : parent_message['user']})
+                
+                if thread_message.get('subtype', None) == 'bot_message':
+                    user = users.find_one({"name" : parent_message['user']})
 
             else:                                               # Has replies -> Must be the parent
-                user = users.find_one({"name" : thread_message['user']})
+                if thread_message.get('subtype', None) == 'bot_message':
+                    user = users.find_one({"name" : thread_message['user']})
 
             if user != None:
                 sender_id = user['sender_id']
