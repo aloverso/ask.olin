@@ -241,8 +241,8 @@ def send_reply(slack_message, timestamp):
 
             # Check that the parent is a bot
             if message.get('subtype', None) == 'bot_message':
-                user = users.find_one({"name" : thread_message['username']})
-                print("username = {}, user = {}".format(thread_message['username'], user))
+                user = users.find_one({"name" : message['username']})
+                print("username = {}, user = {}".format(message['username'], user))
 
                 if user != None:
                     sender_id = user['sender_id']
