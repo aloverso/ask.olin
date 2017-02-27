@@ -211,7 +211,8 @@ def send_reply(slack_message, timestamp):
             "channels.history",
             channel=ASK_OLIN,
             latest=timestamp,
-            inclusive=True
+            inclusive=True,
+            count=1
         )
 
         print("Thread Messages")
@@ -228,7 +229,8 @@ def send_reply(slack_message, timestamp):
                 "channels.history",
                 channel=ASK_OLIN,
                 latest=thread_ts,
-                inclusive=True
+                inclusive=True,
+                count=1
             )
             print("Parent Messages")
             print(parent_messages)
