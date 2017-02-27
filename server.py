@@ -56,6 +56,9 @@ def inbound():
         text = request.form.get('text')
         thread_ts = request.form.get('thread_ts', None)
 
+        print(type(request.form))
+        print(request.form)
+
         #Do something with the message here
         inbound_message = "{} in {} says: {}".format(username, channel, text)
         print(inbound_message)
