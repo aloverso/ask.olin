@@ -60,7 +60,7 @@ def inbound():
         inbound_message = "{} in {} says: {}".format(username, channel, text)
         print(inbound_message)
 
-        if thread == None:
+        if thread_ts == None:
             send_reply(text)
         else:
             send_thread_reply(thread_ts, text)
